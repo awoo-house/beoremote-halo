@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "beoremote-halo"
+version = "0.1.0"
+description = ""
+authors = ["Fox Huston <448633+foxhuston@users.noreply.github.com>"]
+readme = "README.md"
+packages = [{include = "beoremote_halo"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+websockets = "^11.0.3"
+jsons = "^1.6.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
