@@ -16,13 +16,14 @@ class Page:
 
 @dataclass
 class Button:
-    def __init__(self, title, content, id = uuid.uuid4(), subtitle = "", value = 0, state = "active"):
+    def __init__(self, title, content, id = uuid.uuid4(), subtitle = "", value = 0, state = "active", default = False):
         self.id = id
         self.title = title
         self.subtitle = subtitle
         self.value = value
         self.state = state
         self.content = content
+        self.default = default
 
 @dataclass
 class ButtonTextContent:
