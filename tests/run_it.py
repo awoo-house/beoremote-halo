@@ -16,7 +16,10 @@ print(halo)
 
 async def main():
     pages = {
-        "Lighting!": [Light("Living Room")]
+        "Lighting!": [
+            Light("Living Room"),
+            Light("Fox's Bedroom")
+        ]
     }
 
 

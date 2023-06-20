@@ -32,7 +32,7 @@ async def handle(websocket, pages: dict[str, list[Any]]):
 
     while True:
         message = json.loads(await websocket.recv())
-        print(message)
+        # print(message)
 
         if "event" in message:
             evt = message["event"]
