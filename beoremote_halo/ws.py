@@ -1,25 +1,61 @@
 #!/usr/bin/env python3
 import asyncio
 import jsons
+import json
+
+from typing import Any
 
 import websockets as ws
 
 from .light import Light
-from .halo_raw import Configuration
+from .halo_raw import Configuration, Page
 
 
-async def handle(websocket, conf: Configuration):
+async def handle(websocket, pages: dict[str, list[Any]]):
     print("Connected!")
-    jcon = jsons.dumps(conf)
+
+    btnMap = {}
+
+    pgs = []
+    for name, buttons in pages.items():
+        for btn in buttons:
+            btnMap[str(btn.id)] = btn
+
+        pgs.append(Page(
+            name, [ btn.get_configuration() for btn in buttons ]
+        ))
+
+    jcon = jsons.dumps(Configuration(pgs))
     print(jcon)
+
     await websocket.send(jcon)
 
     while True:
-        message = await websocket.recv()
+        message = json.loads(await websocket.recv())
         print(message)
 
+        if "event" in message:
+            evt = message["event"]
+
+            match evt["type"]:
+                case "wheel":
+                    btn_id = evt["id"]
+                    if btn_id not in btnMap:
+                        print("ERROR! Button " + btn_id + "not in button map: " + str(btnMap))
+                    else:
+                        btn.handle_wheel(evt["counts"])
+                        btn_dict = jsons.dump(btn.get_configuration())
+                        btn_dict["type"] = "button"
+
+                        upd = jsons.dumps({"update": btn_dict})
+                        print(">>>> " + upd)
+                        await websocket.send(upd)
+
+                case other:
+                    pass
 
 
-async def init(uri: str, conf: Configuration):
+
+async def init(uri: str, pages: dict[str, list[Any]]):
     async with ws.connect(uri) as websocket:
-        await handle(websocket, conf)
+        await handle(websocket, pages)

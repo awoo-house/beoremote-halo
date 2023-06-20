@@ -3,7 +3,21 @@ import uuid
 
 from .halo_raw import *
 
-class Light:
+
+
+class ButtonBase:
+    def handle_wheel(self, counts: int):
+        pass
+
+    def handle_btn_down(self):
+        pass
+
+    def handle_btn_up(self):
+        pass
+
+
+
+class Light(ButtonBase):
     def __init__(self, name, brightness = 55, state = "on"):
         self.id = uuid.uuid4()
         self.name = name
@@ -20,3 +34,14 @@ class Light:
                id = self.id,
                value = self.brightness,
                state = state)
+
+    def handle_wheel(self, counts: int):
+        self.brightness = self.brightness + counts
+        print(self.brightness)
+        pass
+
+    def handle_btn_down(self):
+        pass
+
+    def handle_btn_up(self):
+        pass

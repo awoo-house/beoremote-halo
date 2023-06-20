@@ -15,12 +15,12 @@ import jsons
 print(halo)
 
 async def main():
-    conf = raw.Configuration([
-        raw.Page("Lighting", [
-            Light("Living Room").get_configuration()
-        ])
-    ])
-    await halo.init("ws://10.0.0.61:8080", conf)
+    pages = {
+        "Lighting!": [Light("Living Room")]
+    }
+
+
+    await halo.init("ws://10.0.0.61:8080", pages)
 
 if __name__ == "__main__":
     asyncio.run(main())
