@@ -43,13 +43,23 @@ async def handle(websocket, pages: dict[str, list[Any]]):
                     if btn_id not in btnMap:
                         print("ERROR! Button " + btn_id + "not in button map: " + str(btnMap))
                     else:
+                        btn = btnMap[btn_id]
                         btn.handle_wheel(evt["counts"])
-                        btn_dict = jsons.dump(btn.get_configuration())
-                        btn_dict["type"] = "button"
+                        await websocket.send(jsons.dumps(btn.get_update()))
 
-                        upd = jsons.dumps({"update": btn_dict})
-                        print(">>>> " + upd)
-                        await websocket.send(upd)
+                case "button":
+                    btn_id = evt["id"]
+                    if btn_id not in btnMap:
+                        print("ERROR! Button " + btn_id + "not in button map: " + str(btnMap))
+                    else:
+                        btn = btnMap[btn_id]
+                        if evt['state'] == 'pressed':
+                            btn.handle_btn_down()
+                            await websocket.send(jsons.dumps(btn.get_update()))
+                        else:
+                            btn.handle_btn_up()
+                            await websocket.send(jsons.dumps(btn.get_update()))
+
 
                 case other:
                     pass
