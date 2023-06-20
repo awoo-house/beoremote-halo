@@ -26,8 +26,6 @@ async def handle(websocket, pages: dict[str, list[Any]]):
         ))
 
     jcon = jsons.dumps(Configuration(pgs))
-    print(jcon)
-
     await websocket.send(jcon)
 
     while True:

@@ -45,7 +45,6 @@ class Light(ButtonBase):
         self.down_time = None
 
     def get_configuration(self) -> Button:
-
         content = ButtonIconContent(
             "lights" if self.mode == "brightness" else "rgb_lights"
         )
