@@ -5,9 +5,7 @@ import uuid
 @dataclass
 class Configuration:
     def __init__(self, pages):
-        self.id = uuid.uuid4()
-        self.version = "1.0.1"
-        self.pages = pages
+        self.configuration = {"id": uuid.uuid4(), "version": "1.0.1", "pages": pages}
 
 @dataclass
 class Page:
@@ -18,11 +16,11 @@ class Page:
 
 @dataclass
 class Button:
-    def __init__(self, title, content, state = "active"):
-        self.id = uuid.uuid4()
+    def __init__(self, title, content, id = uuid.uuid4(), subtitle = "", value = 0, state = "active"):
+        self.id = id
         self.title = title
-        self.subtitle = ""
-        self.value = 0
+        self.subtitle = subtitle
+        self.value = value
         self.state = state
         self.content = content
 
@@ -32,6 +30,6 @@ class ButtonTextContent:
         self.text = text
 
 @dataclass
-class ButtonIconContext:
+class ButtonIconContent:
     def __init__(self, icon):
         self.icon = icon

@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
 import asyncio
-from websockets.client import connect
+import jsons
+
+import websockets as ws
 
 from .light import Light
+from .halo_raw import Configuration
 
-async def init(uri: str):
-    lamp = Light()
 
-    # async for websocket in connect(uri):
-    #     try:
-    #         print("Ok!")
+async def handle(websocket, conf: Configuration):
+    print("Connected!")
+    jcon = jsons.dumps(conf)
+    print(jcon)
+    await websocket.send(jcon)
 
-    #         async for message in websocket:
-    #             print(message)
+    while True:
+        message = await websocket.recv()
+        print(message)
 
-    #     except websockets.ConnectionClosed:
-    #         print("Error!")
-    #         await asyncio.sleep(1)
-    #         continue
+
+
+async def init(uri: str, conf: Configuration):
+    async with ws.connect(uri) as websocket:
+        await handle(websocket, conf)
