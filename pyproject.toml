@@ -10,6 +10,8 @@ packages = [{include = "beoremote_halo"}]
 python = "^3.11"
 websockets = "^11.0.3"
 jsons = "^1.6.3"
+python-dotenv = "^1.0.0"
+zeroconf = "^0.69.0"
 
 
 [build-system]

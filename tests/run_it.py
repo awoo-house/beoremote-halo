@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import asyncio
-
-
-
 import sys
+
 sys.path.append('.') # cursed.
+
+from dotenv import load_dotenv
+load_dotenv()
 
 import beoremote_halo.ws as halo
 from beoremote_halo.light import Light
