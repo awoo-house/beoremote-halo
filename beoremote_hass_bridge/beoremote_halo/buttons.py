@@ -39,7 +39,7 @@ class Light(ButtonBase):
         self.name = name
         self.brightness = brightness
         self.on = on
-        self.hue = 0
+        self.hs_color = [0, 100]
         self.default = default
 
         self.mode = "brightness"
@@ -53,7 +53,8 @@ class Light(ButtonBase):
 
         state = "active" if self.on else "inactive"
 
-        value = self.brightness if self.mode == "brightness" else round((self.hue / 360) * 100)
+        [hue, _] = self.hs_color
+        value = self.brightness if self.mode == "brightness" else round((hue / 360) * 100)
 
         return Button(self.name,
                content,
@@ -66,7 +67,8 @@ class Light(ButtonBase):
         if self.mode == "brightness":
             self.brightness = clamp(0, 100, self.brightness + counts)
         else:
-            self.hue = clamp(0, 360, self.hue + (counts * 3.6))
+            [hue, sat] = self.hs_color
+            self.hs_color = [clamp(0, 360, hue + (counts * 3.6)), sat]
 
     def handle_btn_down(self):
         self.down_time = datetime.datetime.now()

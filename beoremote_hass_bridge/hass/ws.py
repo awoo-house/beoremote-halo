@@ -9,7 +9,7 @@ import coloredlogs, logging
 from beoremote_hass_bridge.common import LightUpdate
 
 logger = logging.getLogger(__name__)
-coloredlogs.install(level='WARN', logger=logger)
+coloredlogs.install(level='DEBUG', logger=logger)
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -26,6 +26,8 @@ async def handle_hass(websocket, ha_entities: list, halo_to_hass: asyncio.Queue,
 
     while True:
         message = json.loads(await websocket.recv())
+        # logger.debug(pp.pformat(message))
+
         match message['type']:
             case "auth_required":
                 logger.info('Connected to HA v' + message['ha_version'])
@@ -41,9 +43,12 @@ async def handle_hass(websocket, ha_entities: list, halo_to_hass: asyncio.Queue,
 
             case "event":
                 dat = message['event']['data']
+                ctx = message['event']['context']['id']
+
                 if dat['entity_id'] in ha_entities:
-                    logger.debug("Light Update!\n" + pp.pformat(dat))
+                    # logger.debug("Light Update[" + str(message['id']) + "]!\n" + pp.pformat(dat))
                     attrs = dat['new_state']['attributes']
+
                     await hass_to_halo.put(LightUpdate(dat['entity_id'],
                         brightness = attrs.get('brightness'),
                         hs_color = attrs.get('hs_color')
@@ -66,8 +71,13 @@ async def handle_halo_to_hass(halo_to_hass: asyncio.Queue, websocket):
                 if lu.brightness is not None:
                     params['brightness'] = lu.brightness
 
+                if lu.brightness_step is not None:
+                    params['brightness_step'] = lu.brightness_step
+
                 if lu.hs_color is not None:
                     params['hs_color'] = lu.hs_color
+
+                logger.info("Will send message id: " + str(ha.msg_id + 1))
 
                 await ha.call_service(
                     domain = 'light',

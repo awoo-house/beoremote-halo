@@ -11,12 +11,9 @@ coloredlogs.install(level='DEBUG', logger=logger)
 @dataclass
 class LightUpdate:
     hass_entity: str
-    brightness: int
     hs_color: Tuple[float, float]
-
-
-
-
+    brightness: int = None
+    brightness_step: int = None
 
 
 class RLQueue(asyncio.Queue):

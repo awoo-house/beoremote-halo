@@ -22,8 +22,8 @@ async def main():
     }
 
     async with asyncio.TaskGroup() as tg:
-        halo_to_hass = RLQueue(messages_per_second=5)
-        hass_to_halo = RLQueue(messages_per_second=5)
+        halo_to_hass = RLQueue(messages_per_second=3)
+        hass_to_halo = RLQueue(messages_per_second=3)
 
         hass_task = tg.create_task(hass.ws.init(os.getenv("HA_WS_API"), ["light.hue_color_lamp_1"], halo_to_hass, hass_to_halo))
         halo_task = tg.create_task(halo.ws.init("ws://10.0.0.61:8080", pages, halo_to_hass, hass_to_halo))
