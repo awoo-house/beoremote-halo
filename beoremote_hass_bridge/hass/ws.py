@@ -4,6 +4,10 @@ import jsons
 import json
 import os
 import pprint
+import coloredlogs, logging
+
+logger = logging.getLogger(__name__)
+coloredlogs.install(level='DEBUG', logger=logger)
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -18,14 +22,13 @@ pp = pprint.PrettyPrinter(width=80)
 
 
 async def handle(websocket, ha_entities: list, halo_to_hass: asyncio.Queue, hass_to_halo: asyncio.Queue):
-    print("hass Connected!")
     ha = HA(websocket)
 
     while True:
         message = json.loads(await websocket.recv())
         match message['type']:
             case "auth_required":
-                print('Connected to HA v' + message['ha_version'])
+                logger.info('Connected to HA v' + message['ha_version'])
                 await websocket.send(
                     json.dumps({
                         'type': 'auth',
@@ -39,15 +42,17 @@ async def handle(websocket, ha_entities: list, halo_to_hass: asyncio.Queue, hass
             case "event":
                 dat = message['event']['data']
                 if dat['entity_id'] in ha_entities:
-                    print("GET!")
-                    pp.pprint(dat)
-
+                    logger.debug("Light Update!\n" + pp.pformat(dat))
+                    await hass_to_halo.put({
+                        'type': 'light_update',
+                        'hass_entity': dat['entity_id'],
+                        'attributes': dat['new_state']['attributes']
+                    })
 
             case other:
-                print("Don't know what to do with message...")
-                pp.pprint(message)
+                logger.warning("Don't know what to do with message...\n" + pp.pformat(message))
 
 
 async def init(uri: str, ha_entities: list, halo_to_hass: asyncio.Queue, hass_to_halo: asyncio.Queue):
-    async with ws.connect(uri) as websocket:
+    async with ws.connect(uri, ping_timeout=None) as websocket:
         await handle(websocket, ha_entities, halo_to_hass, hass_to_halo)
