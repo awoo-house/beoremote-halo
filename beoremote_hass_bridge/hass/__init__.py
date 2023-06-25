@@ -5,10 +5,18 @@ import os
 from urllib.parse import urlparse, urlunparse
 
 from common import RLQueue, LightUpdate
+from beoremote_halo.buttons import ButtonBase, Light
 
-async def initialize(_to_hass: RLQueue, entity_id: str) -> None:
+import pprint
+import coloredlogs, logging
+
+logger = logging.getLogger(__name__)
+coloredlogs.install(level='DEBUG', logger=logger)
+
+
+
+async def get_state(entity_id: str) -> dict:
     uri = urlunparse(urlparse(os.getenv('HA_URI'))._replace(path="/api/states/%s" % entity_id))
-    print(uri)
 
     headers = {
         'Authorization': 'Bearer %s' % os.getenv('HA_AUTH_TOKEN'),
@@ -17,13 +25,22 @@ async def initialize(_to_hass: RLQueue, entity_id: str) -> None:
 
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(uri) as resp:
-            print(resp.status)
-            body = await resp.json()
-            print(body)
+            return await resp.json()
 
-            await _to_hass.force_put(LightUpdate(
-                hass_entity=entity_id,
-                state=body.get('state'),
-                hs_color=body['attributes'].get('hs_color'),
-                brightness=body['attributes'].get('brightness')
-            ))
+async def initialize(pages: dict[str, list[ButtonBase]]) -> None:
+    print(pages)
+    for page, buttons in pages.items():
+        for button in buttons:
+            match button:
+                case Light() as l:
+                    state = await get_state(l.hass_entity)
+                    logger.info("Got state for %s / %s", page, l.hass_entity)
+                    logger.debug(pprint.pformat(state))
+
+                    attr = state['attributes']
+
+                    l.on = state['state'] == 'on'
+                    l.name = attr['friendly_name']
+                    l.brightness = round(((attr.get('brightness') or 0) / 255) * 100)
+                    l.hs_color = attr.get('hs_color') or [0, 100]
+

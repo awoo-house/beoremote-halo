@@ -27,11 +27,13 @@ async def main():
 
 
     pages = {
-        "Lighting!": [
-            halo.buttons.Light("Test Lamp", "light.hue_color_lamp_1", default = True),
-            halo.buttons.Light("Fox's Bedroom", "light.foxs_bedroom")
+        "Den Lighting": [
+            halo.buttons.Light("light.hue_color_lamp_1", default = True),
+            halo.buttons.Light("light.foxs_bedroom")
         ]
     }
+
+    await hass.initialize(pages)
 
     async with asyncio.TaskGroup() as tg:
         halo_to_hass = RLQueue(messages_per_second=3)
@@ -47,7 +49,6 @@ async def main():
 
         signal.signal(signal.SIGINT, handler)
 
-        await hass.initialize(halo_to_hass, "light.hue_color_lamp_1")
 
 
 if __name__ == "__main__":

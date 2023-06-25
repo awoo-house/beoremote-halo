@@ -45,8 +45,6 @@ async def authenticate(websocket):
 
 
 
-
-
 async def handle_hass(websocket, ha_entities: list, halo_to_hass: asyncio.Queue, hass_to_halo: asyncio.Queue):
     ha = HA(websocket)
 
@@ -101,9 +99,6 @@ async def handle_halo_to_hass(halo_to_hass: asyncio.Queue, websocket):
                 params = {}
                 if lu.brightness is not None:
                     params['brightness'] = lu.brightness
-
-                # if lu.state is not None:
-                #     params['state'] = lu.state
 
                 if lu.hs_color is not None:
                     params['hs_color'] = lu.hs_color
