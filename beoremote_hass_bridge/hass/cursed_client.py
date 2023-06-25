@@ -1,3 +1,4 @@
+import json
 
 class HA:
     def __init__(self, ws):
