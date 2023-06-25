@@ -8,7 +8,7 @@ import datetime
 from .halo_raw import *
 from common import LightState
 
-
+LONG_PRESS_DURATION = 0.5
 
 class ButtonBase:
     def hass_entity(self) -> str:
@@ -30,12 +30,12 @@ class ButtonBase:
         btn_dict = jsons.dump(self.get_configuration())
         btn_dict["type"] = "button"
         upd = {"update": btn_dict}
-        # print(">>>> " + str(upd))
+        print(">>>> " + str(upd))
         return upd
 
 def clamp(lower, upper, n): return max(lower, min(upper, n))
 
-def pct(out_max: int, in_max: int, n: float) -> int:
+def pct(out_max: float, in_max: float, n: float) -> int:
     return round((n / in_max) * out_max)
 
 class Light(ButtonBase):
@@ -105,7 +105,7 @@ class Light(ButtonBase):
         press_duration = now - self.down_time
         self.down_time = None
 
-        if(press_duration.total_seconds() >= self.__LONG_PRESS_DURATION__):
+        if(press_duration.total_seconds() >= LONG_PRESS_DURATION):
             match self.light.color_mode:
                 case 'color_temp':
                     self.light = replace(

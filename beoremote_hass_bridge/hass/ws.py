@@ -60,14 +60,7 @@ async def handle_hass(websocket, ha_entities: list, halo_to_hass: asyncio.Queue,
                 dat = message['event']['data']
 
                 if dat['entity_id'] in ha_entities:
-                    attrs = dat['new_state']['attributes']
-
-                    await hass_to_halo.put(LightState(
-                        hass_entity=dat['entity_id'],
-                        state=dat['new_state'].get('state'),
-                        brightness = attrs.get('brightness'),
-                        hs_color = attrs.get('hs_color')
-                    ))
+                    await hass_to_halo.put(LightState.from_ha_event(dat['new_state']))
 
             case other:
                 pass
@@ -82,11 +75,7 @@ async def handle_halo_to_hass(halo_to_hass: asyncio.Queue, websocket):
         logger.debug(msg)
 
         match msg:
-            case GetStatesFor() as gsf:
-                logger.warn("calling get_states...")
-                # await ha.get_states()
-
-            case LightState(state='off') as lu:
+            case LightState(hass_entity=hass_entity, state='off') as lu:
                 logger.warn('lu state off')
                 await ha.call_service(
                     domain = 'light',
@@ -94,7 +83,7 @@ async def handle_halo_to_hass(halo_to_hass: asyncio.Queue, websocket):
                     target = { 'entity_id': lu.hass_entity }
                 )
 
-            case LightState(state='on') as lu:
+            case LightState(hass_entity=hass_entity, state='on') as lu:
                 logger.warn('lu state on')
                 params = {}
                 if lu.brightness is not None:
@@ -111,7 +100,7 @@ async def handle_halo_to_hass(halo_to_hass: asyncio.Queue, websocket):
                 )
 
             case o:
-                logger.error('unhandled interval event')
+                logger.error('unhandled internal event')
                 logger.error(pp.pformat(o))
 
 

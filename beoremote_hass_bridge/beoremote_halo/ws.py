@@ -59,12 +59,7 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
                         await websocket.send(jsons.dumps(btn.get_update()))
 
                         last_sent_time = datetime.now()
-                        await halo_to_hass.put(LightState(
-                            hass_entity = btn.hass_entity(),
-                            state = btn.light.state,
-                            brightness =  round((btn.light.brightness / 100) * 255),
-                            hs_color = btn.light.hs_color
-                        ))
+                        await halo_to_hass.put(btn.light)
 
                 case "button":
                     btn_id = evt["id"]
@@ -77,10 +72,7 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
                             await websocket.send(jsons.dumps(btn.get_update()))
                         else:
                             btn.handle_btn_up()
-                            await halo_to_hass.put(LightState(
-                                hass_entity = btn.hass_entity(),
-                                state = "on" if btn.on else "off",
-                            ))
+                            await halo_to_hass.put(btn.light)
                             await websocket.send(jsons.dumps(btn.get_update()))
 
                 case 'status':
@@ -129,21 +121,13 @@ async def handle_hass_to_halo(hass_to_halo: asyncio.Queue, pages: dict[str, list
                     match btn_map[hass_entity]:
                         case Light() as light:
                             logger.debug('updating light from hass!')
-
-                            if lu.brightness is not None:
-                                light.brightness = round((lu.brightness / 255) * 100)
-                            else:
-                                light.brightness = 0
-
-                            light.on = lu.state == 'on'
-                            
-                            if lu.hs_color is not None:
-                                light.hs_color = lu.hs_color
+                            logger.debug(pprint.pformat(lu))
+                            light.light = lu
 
                             msg = jsons.dumps(light.get_update())
                             logger.debug("Sending updated light state: " + msg)
-                            await websocket.send(msg)
 
+                            await websocket.send(msg)
                 
 async def init(uri: str, pages: dict[str, list[Any]], halo_to_hass: asyncio.Queue, hass_to_halo: asyncio.Queue):
     logger.debug('beoremote init')
