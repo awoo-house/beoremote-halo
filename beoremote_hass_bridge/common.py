@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Literal
 
 import asyncio
 from dataclasses import dataclass
@@ -6,18 +6,23 @@ from datetime import datetime
 import coloredlogs, logging
 
 logger = logging.getLogger(__name__)
-coloredlogs.install(level='DEBUG', logger=logger)
+coloredlogs.install(logger=logger)
 
 @dataclass
 class LightUpdate:
     hass_entity: str
-    hs_color: Tuple[float, float]
-    brightness: int = None
-    brightness_step: int = None
+    state: Literal["on", "off"]
+    hs_color: Tuple[float, float] | None = None
+    brightness: int | None = None
 
+
+@dataclass
+class GetStatesFor:
+    hass_entities: list[str]
+
+################################################################################
 
 class RLQueue(asyncio.Queue):
-
     def __init__(self, messages_per_second: float = 1, maxsize: int = 0):
         logger.debug('RLQueue init.')
         super().__init__(maxsize=maxsize)
@@ -25,6 +30,12 @@ class RLQueue(asyncio.Queue):
         self.last_time = datetime.now()
         self.timeout_writer: asyncio.Task = None
         self.latest_message = None
+
+    def force_put_nowait(self, msg):
+        super().put_nowait(msg)
+
+    async def force_put(self, msg):
+        await super().put(msg)
 
     async def tw_run(self):
         await asyncio.sleep(self.message_delta)

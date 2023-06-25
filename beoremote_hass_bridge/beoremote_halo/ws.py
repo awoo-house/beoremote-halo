@@ -19,6 +19,8 @@ pp = pprint.PrettyPrinter(width=80)
 logger = logging.getLogger(__name__)
 coloredlogs.install(level='DEBUG', logger=logger)
 
+last_sent_time = datetime.now()
+
 async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_hass: asyncio.Queue):
     global last_sent_time
 
@@ -52,15 +54,15 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
                     if btn_id not in btn_map:
                         logger.error("ERROR! Button " + btn_id + "not in button map: " + str(btn_map))
                     else:
-                        btn = btn_map[btn_id]
+                        btn: Light = btn_map[btn_id]
                         btn.handle_wheel(evt["counts"])
                         await websocket.send(jsons.dumps(btn.get_update()))
 
                         last_sent_time = datetime.now()
                         await halo_to_hass.put(LightUpdate(
                             hass_entity = btn.hass_entity,
-                            # brightness =  round((btn.brightness / 100) * 255),
-                            brightness_step = evt["counts"] * 10,
+                            state = "on" if btn.on else "off",
+                            brightness =  round((btn.brightness / 100) * 255),
                             hs_color = btn.hs_color
                         ))
 
@@ -69,12 +71,16 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
                     if btn_id not in btn_map:
                         logger.error("ERROR! Button " + btn_id + "not in button map: " + str(btn_map))
                     else:
-                        btn = btn_map[btn_id]
+                        btn: Light = btn_map[btn_id]
                         if evt['state'] == 'pressed':
                             btn.handle_btn_down()
                             await websocket.send(jsons.dumps(btn.get_update()))
                         else:
                             btn.handle_btn_up()
+                            await halo_to_hass.put(LightUpdate(
+                                hass_entity = btn.hass_entity,
+                                state = "on" if btn.on else "off",
+                            ))
                             await websocket.send(jsons.dumps(btn.get_update()))
 
                 case 'status':
@@ -96,6 +102,8 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
             logger.warning("Don't know how to handle MESSAGE:\n" + pprint.pformat(message))
 
 async def handle_hass_to_halo(hass_to_halo: asyncio.Queue, pages: dict[str, list[Any]], websocket):
+    global last_sent_time
+
     btn_map = {}
     for name, buttons in pages.items():
         for btn in buttons:
@@ -112,22 +120,23 @@ async def handle_hass_to_halo(hass_to_halo: asyncio.Queue, pages: dict[str, list
             case LightUpdate(hass_entity=hass_entity) as lu:
                 delta = (datetime.now() - last_sent_time).total_seconds()
                 if delta <= 10.0:
-                    logger.warn('ignoring hass event')
+                    logger.debug('ignoring hass event')
                     continue
                 else:
-                    logger.error('receiving hass event; delta is: ' + str(delta))
+                    logger.debug('receiving hass event; delta is: ' + str(delta))
 
                 if hass_entity in btn_map:
                     match btn_map[hass_entity]:
                         case Light() as light:
-                            logger.error('updating light from hass!')
+                            logger.debug('updating light from hass!')
+
                             if lu.brightness is not None:
                                 light.brightness = round((lu.brightness / 255) * 100)
-                                light.on = True
                             else:
                                 light.brightness = 0
-                                light.on = False
 
+                            light.on = lu.state == 'on'
+                            
                             if lu.hs_color is not None:
                                 light.hs_color = lu.hs_color
 

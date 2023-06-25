@@ -66,6 +66,7 @@ class Light(ButtonBase):
     def handle_wheel(self, counts: int):
         if self.mode == "brightness":
             self.brightness = clamp(0, 100, self.brightness + counts)
+            self.on = self.brightness > 0
         else:
             [hue, sat] = self.hs_color
             self.hs_color = [clamp(0, 360, hue + (counts * 3.6)), sat]
