@@ -18,7 +18,6 @@ pp = pprint.PrettyPrinter(width=80)
 logger = logging.getLogger(__name__)
 coloredlogs.install(level='DEBUG', logger=logger)
 
-
 async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_hass: asyncio.Queue):
     logger.debug("Halo Connected!")
 
@@ -48,11 +47,11 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
                 case "wheel":
                     btn_id = evt["id"]
                     if btn_id not in btn_map:
-                        print("ERROR! Button " + btn_id + "not in button map: " + str(btn_map))
+                        logger.error("ERROR! Button " + btn_id + "not in button map: " + str(btn_map))
                     else:
                         btn = btn_map[btn_id]
                         btn.handle_wheel(evt["counts"])
-                        await websocket.send(jsons.dumps(btn.get_update()))
+                        # await websocket.send(jsons.dumps(btn.get_update()))
                         await halo_to_hass.put(LightUpdate(
                             hass_entity = btn.hass_entity,
                             brightness =  btn.brightness,
@@ -62,7 +61,7 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
                 case "button":
                     btn_id = evt["id"]
                     if btn_id not in btn_map:
-                        print("ERROR! Button " + btn_id + "not in button map: " + str(btn_map))
+                        logger.error("ERROR! Button " + btn_id + "not in button map: " + str(btn_map))
                     else:
                         btn = btn_map[btn_id]
                         if evt['state'] == 'pressed':
@@ -90,12 +89,11 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
         else:
             logger.warning("Don't know how to handle MESSAGE:\n" + pprint.pformat(message))
 
-
 async def handle_hass_to_halo(hass_to_halo: asyncio.Queue, pages: dict[str, list[Any]], websocket):
     btn_map = {}
     for name, buttons in pages.items():
         for btn in buttons:
-            btn_map[str(btn.name)] = btn
+            btn_map[str(btn.hass_entity)] = btn
 
     logger.debug(btn_map)
 
@@ -125,7 +123,6 @@ async def handle_hass_to_halo(hass_to_halo: asyncio.Queue, pages: dict[str, list
                             await websocket.send(msg)
 
                 
-
 async def init(uri: str, pages: dict[str, list[Any]], halo_to_hass: asyncio.Queue, hass_to_halo: asyncio.Queue):
     logger.debug('beoremote init')
 
