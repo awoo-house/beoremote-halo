@@ -6,6 +6,7 @@ import coloredlogs, logging
 
 from typing import Any
 
+from beoremote_hass_bridge.common import LightUpdate
 import websockets as ws
 
 from .buttons import Light, ButtonBase
@@ -80,18 +81,21 @@ async def handle_hass_to_halo(hass_to_halo: asyncio.Queue, pages: dict[str, list
         logger.debug("Got hass event!")
         logger.debug(msg)
 
-        match msg['type']:
-            case 'light_update':
-                if msg['hass_entity'] in btn_map:
-                    attrs = msg['attributes']
-                    match btn_map[msg['hass_entity']]:
+        match msg:
+            case LightUpdate(hass_entity=hass_entity) as lu:
+                if hass_entity in btn_map:
+                    match btn_map[hass_entity]:
                         case Light() as light:
-                            if 'brightness' in attrs:
-                                light.brightness = round((attrs['brightness'] / 255) * 100)
+                            if lu.brightness is not None:
+                                light.brightness = round((lu.brightness / 255) * 100)
                                 light.on = True
                             else:
                                 light.brightness = 0
                                 light.on = False
+
+                            if lu.hs_color is not None:
+                                [hue, _] = lu.hs_color
+                                light.hue = hue
 
                             msg = jsons.dumps(light.get_update())
                             logger.debug("Sending updated light state: " + msg)

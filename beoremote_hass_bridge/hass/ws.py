@@ -6,6 +6,8 @@ import os
 import pprint
 import coloredlogs, logging
 
+from beoremote_hass_bridge.common import LightUpdate
+
 logger = logging.getLogger(__name__)
 coloredlogs.install(level='DEBUG', logger=logger)
 
@@ -43,11 +45,11 @@ async def handle(websocket, ha_entities: list, halo_to_hass: asyncio.Queue, hass
                 dat = message['event']['data']
                 if dat['entity_id'] in ha_entities:
                     logger.debug("Light Update!\n" + pp.pformat(dat))
-                    await hass_to_halo.put({
-                        'type': 'light_update',
-                        'hass_entity': dat['entity_id'],
-                        'attributes': dat['new_state']['attributes']
-                    })
+                    attrs = dat['new_state']['attributes']
+                    await hass_to_halo.put(LightUpdate(dat['entity_id'],
+                        brightness = attrs.get('brightness'),
+                        hs_color = attrs.get('hs_color')
+                    ))
 
             case other:
                 logger.warning("Don't know what to do with message...\n" + pp.pformat(message))
