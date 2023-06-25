@@ -31,7 +31,7 @@ class ButtonBase:
 def clamp(lower, upper, n): return max(lower, min(upper, n))
 
 class Light(ButtonBase):
-    def __init__(self, name, brightness = 55, on = True):
+    def __init__(self, name, brightness = 0, on = False, default=False):
         self.__LONG_PRESS_DURATION__ = 0.5 # in seconds
 
         self.id = uuid.uuid4()
@@ -39,6 +39,7 @@ class Light(ButtonBase):
         self.brightness = brightness
         self.on = on
         self.hue = 0
+        self.default = default
 
         self.mode = "brightness"
 

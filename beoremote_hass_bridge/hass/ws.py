@@ -13,11 +13,12 @@ import websockets as ws
 
 from .cursed_client import HA
 
-pp = pprint.PrettyPrinter(width=70)
+pp = pprint.PrettyPrinter(width=80)
 
 
 
-async def handle(websocket):
+async def handle(websocket, ha_entities: list, halo_to_hass: asyncio.Queue, hass_to_halo: asyncio.Queue):
+    print("hass Connected!")
     ha = HA(websocket)
 
     while True:
@@ -35,11 +36,18 @@ async def handle(websocket):
                 # Time to subscribe to what we want...
                 await ha.subscribe_events(event_type='state_changed')
 
+            case "event":
+                dat = message['event']['data']
+                if dat['entity_id'] in ha_entities:
+                    print("GET!")
+                    pp.pprint(dat)
+
+
             case other:
                 print("Don't know what to do with message...")
                 pp.pprint(message)
 
 
-async def init(uri: str):
+async def init(uri: str, ha_entities: list, halo_to_hass: asyncio.Queue, hass_to_halo: asyncio.Queue):
     async with ws.connect(uri) as websocket:
-        await handle(websocket)
+        await handle(websocket, ha_entities, halo_to_hass, hass_to_halo)

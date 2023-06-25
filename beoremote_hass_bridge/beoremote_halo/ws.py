@@ -7,12 +7,12 @@ from typing import Any
 
 import websockets as ws
 
-from .light import Light
+from .buttons import Light
 from .halo_raw import Configuration, Page
 
 
-async def handle(websocket, pages: dict[str, list[Any]]):
-    print("Connected!")
+async def handle(websocket, pages: dict[str, list[Any]], halo_to_hass: asyncio.Queue, hass_to_halo: asyncio.Queue):
+    print("Halo Connected!")
 
     btnMap = {}
 
@@ -64,6 +64,6 @@ async def handle(websocket, pages: dict[str, list[Any]]):
 
 
 
-async def init(uri: str, pages: dict[str, list[Any]]):
+async def init(uri: str, pages: dict[str, list[Any]], halo_to_hass: asyncio.Queue, hass_to_halo: asyncio.Queue):
     async with ws.connect(uri) as websocket:
-        await handle(websocket, pages)
+        await handle(websocket, pages, halo_to_hass, hass_to_halo)
