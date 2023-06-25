@@ -21,9 +21,7 @@ from .cursed_client import HA
 
 pp = pprint.PrettyPrinter(width=80)
 
-
-
-async def handle(websocket, ha_entities: list, halo_to_hass: asyncio.Queue, hass_to_halo: asyncio.Queue):
+async def handle_hass(websocket, ha_entities: list, halo_to_hass: asyncio.Queue, hass_to_halo: asyncio.Queue):
     ha = HA(websocket)
 
     while True:
@@ -54,7 +52,34 @@ async def handle(websocket, ha_entities: list, halo_to_hass: asyncio.Queue, hass
             case other:
                 logger.warning("Don't know what to do with message...\n" + pp.pformat(message))
 
+async def handle_halo_to_hass(halo_to_hass: asyncio.Queue, websocket):
+    ha = HA(websocket)
+
+    while True:
+        msg = await halo_to_hass.get()
+        logger.debug("Got halo event!")
+        logger.debug(msg)
+
+        match msg:
+            case LightUpdate() as lu:
+                params = {}
+                if lu.brightness is not None:
+                    params['brightness'] = lu.brightness
+
+                if lu.hs_color is not None:
+                    params['hs_color'] = lu.hs_color
+
+                await ha.call_service(
+                    domain = 'light',
+                    service = 'turn_on',
+                    service_data = params,
+                    target = { 'entity_id': lu.hass_entity }
+                )
+
+    
 
 async def init(uri: str, ha_entities: list, halo_to_hass: asyncio.Queue, hass_to_halo: asyncio.Queue):
     async with ws.connect(uri, ping_timeout=None) as websocket:
-        await handle(websocket, ha_entities, halo_to_hass, hass_to_halo)
+        async with asyncio.TaskGroup() as tg:
+            hass_events = tg.create_task(handle_hass(websocket, ha_entities, halo_to_hass, hass_to_halo))
+            halo_events = tg.create_task(handle_halo_to_hass(halo_to_hass, websocket))

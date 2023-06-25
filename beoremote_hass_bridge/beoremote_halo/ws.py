@@ -3,6 +3,7 @@ import asyncio
 import jsons
 import json
 import coloredlogs, logging
+import pprint
 
 from typing import Any
 
@@ -11,6 +12,8 @@ import websockets as ws
 
 from .buttons import Light, ButtonBase
 from .halo_raw import Configuration, Page
+
+pp = pprint.PrettyPrinter(width=80)
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(level='DEBUG', logger=logger)
@@ -30,8 +33,9 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
             name, [ btn.get_configuration() for btn in buttons ]
         ))
 
+    logger.debug(pp.pformat(Configuration(pgs)))
     jcon = jsons.dumps(Configuration(pgs))
-    await websocket.send(jcon)
+    await websocket.send(str(jcon))
 
     while True:
         message = json.loads(await websocket.recv())
@@ -49,6 +53,11 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
                         btn = btn_map[btn_id]
                         btn.handle_wheel(evt["counts"])
                         await websocket.send(jsons.dumps(btn.get_update()))
+                        await halo_to_hass.put(LightUpdate(
+                            hass_entity = btn.hass_entity,
+                            brightness =  btn.brightness,
+                            hs_color = [btn.hue, 100.0]
+                        ))
 
                 case "button":
                     btn_id = evt["id"]
@@ -63,9 +72,23 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
                             btn.handle_btn_up()
                             await websocket.send(jsons.dumps(btn.get_update()))
 
+                case 'status':
+                    if evt['state'] == 'error':
+                        logger.error(evt['message'])
+                    # else:
+                    #     logger.info(pp.pformat(evt))
+
+                case 'system':
+                    logger.info(evt)
+
+                case 'power':
+                    logger.info(evt)
 
                 case other:
-                    pass
+                    logger.warning("Don't know how to handle event:\n" + pprint.pformat(evt))
+
+        else:
+            logger.warning("Don't know how to handle MESSAGE:\n" + pprint.pformat(message))
 
 
 async def handle_hass_to_halo(hass_to_halo: asyncio.Queue, pages: dict[str, list[Any]], websocket):
