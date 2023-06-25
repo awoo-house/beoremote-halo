@@ -8,7 +8,7 @@ from datetime import datetime
 
 from typing import Any
 
-from beoremote_hass_bridge.common import LightUpdate
+from beoremote_hass_bridge.common import LightState
 import websockets as ws
 
 from .buttons import Light, ButtonBase
@@ -59,11 +59,11 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
                         await websocket.send(jsons.dumps(btn.get_update()))
 
                         last_sent_time = datetime.now()
-                        await halo_to_hass.put(LightUpdate(
-                            hass_entity = btn.hass_entity,
-                            state = "on" if btn.on else "off",
-                            brightness =  round((btn.brightness / 100) * 255),
-                            hs_color = btn.hs_color
+                        await halo_to_hass.put(LightState(
+                            hass_entity = btn.hass_entity(),
+                            state = btn.light.state,
+                            brightness =  round((btn.light.brightness / 100) * 255),
+                            hs_color = btn.light.hs_color
                         ))
 
                 case "button":
@@ -77,8 +77,8 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
                             await websocket.send(jsons.dumps(btn.get_update()))
                         else:
                             btn.handle_btn_up()
-                            await halo_to_hass.put(LightUpdate(
-                                hass_entity = btn.hass_entity,
+                            await halo_to_hass.put(LightState(
+                                hass_entity = btn.hass_entity(),
                                 state = "on" if btn.on else "off",
                             ))
                             await websocket.send(jsons.dumps(btn.get_update()))
@@ -107,7 +107,7 @@ async def handle_hass_to_halo(hass_to_halo: asyncio.Queue, pages: dict[str, list
     btn_map = {}
     for name, buttons in pages.items():
         for btn in buttons:
-            btn_map[str(btn.hass_entity)] = btn
+            btn_map[str(btn.hass_entity())] = btn
 
     logger.debug(btn_map)
 
@@ -117,7 +117,7 @@ async def handle_hass_to_halo(hass_to_halo: asyncio.Queue, pages: dict[str, list
         logger.debug(msg)
 
         match msg:
-            case LightUpdate(hass_entity=hass_entity) as lu:
+            case LightState(hass_entity=hass_entity) as lu:
                 delta = (datetime.now() - last_sent_time).total_seconds()
                 if delta <= 10.0:
                     logger.debug('ignoring hass event')

@@ -4,7 +4,7 @@ import aiohttp
 import os
 from urllib.parse import urlparse, urlunparse
 
-from common import RLQueue, LightUpdate
+from common import RLQueue, LightState
 from beoremote_halo.buttons import ButtonBase, Light
 
 import pprint
@@ -13,7 +13,7 @@ import coloredlogs, logging
 logger = logging.getLogger(__name__)
 coloredlogs.install(level='DEBUG', logger=logger)
 
-
+pp = pprint.PrettyPrinter(width = 80)
 
 async def get_state(entity_id: str) -> dict:
     uri = urlunparse(urlparse(os.getenv('HA_URI'))._replace(path="/api/states/%s" % entity_id))
@@ -33,14 +33,8 @@ async def initialize(pages: dict[str, list[ButtonBase]]) -> None:
         for button in buttons:
             match button:
                 case Light() as l:
-                    state = await get_state(l.hass_entity)
-                    logger.info("Got state for %s / %s", page, l.hass_entity)
+                    state = await get_state(l.hass_entity())
+                    logger.info("Got state for %s / %s", page, l.hass_entity())
                     logger.debug(pprint.pformat(state))
 
-                    attr = state['attributes']
-
-                    l.on = state['state'] == 'on'
-                    l.name = attr['friendly_name']
-                    l.brightness = round(((attr.get('brightness') or 0) / 255) * 100)
-                    l.hs_color = attr.get('hs_color') or [0, 100]
-
+                    l.light = LightState.from_ha_event(state)

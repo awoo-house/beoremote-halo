@@ -6,7 +6,7 @@ import os
 import pprint
 import coloredlogs, logging
 
-from beoremote_hass_bridge.common import LightUpdate, GetStatesFor
+from beoremote_hass_bridge.common import LightState, GetStatesFor
 
 logger = logging.getLogger(__name__)
 coloredlogs.install(level='DEBUG', logger=logger)
@@ -62,7 +62,7 @@ async def handle_hass(websocket, ha_entities: list, halo_to_hass: asyncio.Queue,
                 if dat['entity_id'] in ha_entities:
                     attrs = dat['new_state']['attributes']
 
-                    await hass_to_halo.put(LightUpdate(
+                    await hass_to_halo.put(LightState(
                         hass_entity=dat['entity_id'],
                         state=dat['new_state'].get('state'),
                         brightness = attrs.get('brightness'),
@@ -86,7 +86,7 @@ async def handle_halo_to_hass(halo_to_hass: asyncio.Queue, websocket):
                 logger.warn("calling get_states...")
                 # await ha.get_states()
 
-            case LightUpdate(state='off') as lu:
+            case LightState(state='off') as lu:
                 logger.warn('lu state off')
                 await ha.call_service(
                     domain = 'light',
@@ -94,7 +94,7 @@ async def handle_halo_to_hass(halo_to_hass: asyncio.Queue, websocket):
                     target = { 'entity_id': lu.hass_entity }
                 )
 
-            case LightUpdate(state='on') as lu:
+            case LightState(state='on') as lu:
                 logger.warn('lu state on')
                 params = {}
                 if lu.brightness is not None:

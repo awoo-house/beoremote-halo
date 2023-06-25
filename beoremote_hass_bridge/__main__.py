@@ -28,8 +28,8 @@ async def main():
 
     pages = {
         "Den Lighting": [
-            halo.buttons.Light("light.hue_color_lamp_1", default = True),
-            halo.buttons.Light("light.foxs_bedroom")
+            halo.buttons.Light.mk_light("light.hue_color_lamp_1", default = True),
+            halo.buttons.Light.mk_light("light.foxs_bedroom")
         ]
     }
 

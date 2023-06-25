@@ -9,11 +9,26 @@ logger = logging.getLogger(__name__)
 coloredlogs.install(logger=logger)
 
 @dataclass
-class LightUpdate:
+class LightState:
     hass_entity: str
     state: Literal["on", "off"]
+    friendly_name: str | None = None
+    color_mode: Literal['color_temp', 'rgb'] = 'color_temp'
+    color_temp: int = 443
     hs_color: Tuple[float, float] | None = None
     brightness: int | None = None
+
+    def from_ha_event(evt):
+        attrs = evt['attributes']
+        return LightState(
+            hass_entity=evt['entity_id'],
+            state=evt['state'],
+            friendly_name=attrs['friendly_name'],
+            color_mode = 'color_temp' if attrs.get('color_mode') == 'color_temp' else 'rgb',
+            color_temp = attrs.get('color_temp') or 443,
+            hs_color = attrs.get('hs_color') or [0, 100],
+            brightness = attrs.get('brightness') or 0
+        )
 
 
 @dataclass

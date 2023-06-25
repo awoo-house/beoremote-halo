@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 import uuid
 
+from dataclasses import replace
 import jsons
 import datetime
 
 from .halo_raw import *
+from common import LightState
 
 
 
 class ButtonBase:
+    def hass_entity(self) -> str:
+        pass
+
     def get_configuration(self) -> Button:
         pass
 
@@ -30,46 +35,66 @@ class ButtonBase:
 
 def clamp(lower, upper, n): return max(lower, min(upper, n))
 
+def pct(out_max: int, in_max: int, n: float) -> int:
+    return round((n / in_max) * out_max)
+
 class Light(ButtonBase):
-    def __init__(self, hass_entity, name = '', brightness = 0, on = True, default = False):
-        self.__LONG_PRESS_DURATION__ = 0.5 # in seconds
-
-        self.id = uuid.uuid4()
-        self.hass_entity = hass_entity
-        self.name = name
-        self.brightness = brightness
-        self.on = on
-        self.hs_color = [0, 100]
+    def __init__(self, light_state: LightState, default = False) -> None:
+        self.light: LightState = light_state
+        self.down_time: datetime = None
         self.default = default
+        self.id: uuid.UUID = uuid.uuid4()
 
-        self.mode = "brightness"
+    def mk_light(hass_entity: str, default = False):
+        return Light(LightState(
+            hass_entity=hass_entity,
+            friendly_name='',
+            state='on'
+        ), default=default)
 
-        self.down_time = None
+    def hass_entity(self) -> str:
+        return self.light.hass_entity
 
     def get_configuration(self) -> Button:
-        content = ButtonIconContent(
-            "lights" if self.mode == "brightness" else "rgb_lights"
-        )
+        match self.light.color_mode:
+            case 'color_temp':
+                content = ButtonIconContent("lights")
+                return Button(
+                    id=self.id,
+                    title=self.light.friendly_name,
+                    content=content,
+                    value=pct(100, 255, self.light.brightness),
+                    state='active' if self.light.state == 'on' else 'inactive',
+                    default=self.default
+                )
 
-        state = "active" if self.on else "inactive"
-
-        [hue, _] = self.hs_color
-        value = self.brightness if self.mode == "brightness" else round((hue / 360) * 100)
-
-        return Button(self.name,
-               content,
-               default = self.default,
-               id = self.id,
-               value = value,
-               state = state)
+            case 'rgb':
+                content = ButtonIconContent("rgb_lights")
+                print(self.light.hs_color)
+                [hue, _] = self.light.hs_color
+                return Button(
+                    id=self.id,
+                    title = self.light.friendly_name,
+                    content=content,
+                    value=pct(100, 360, hue),
+                    state='active' if self.light.state == 'on' else 'inactive',
+                    default=self.default
+                )
 
     def handle_wheel(self, counts: int):
-        if self.mode == "brightness":
-            self.brightness = clamp(0, 100, self.brightness + counts)
-            self.on = self.brightness > 0
+        if self.light.color_mode == 'color_temp':
+            self.light = replace(
+                self.light,
+                brightness = clamp(0, 255, self.light.brightness + (counts * 2.5)),
+                state = 'on' if self.light.brightness > 0 else 'off'
+            )
+
         else:
-            [hue, sat] = self.hs_color
-            self.hs_color = [clamp(0, 360, hue + (counts * 3.6)), sat]
+            [hue, sat] = self.light.hs_color
+            self.light = replace(
+                self.light,
+                hs_color = [clamp(0, 360, hue + (counts * 3.6)), sat]
+            )
 
     def handle_btn_down(self):
         self.down_time = datetime.datetime.now()
@@ -81,7 +106,19 @@ class Light(ButtonBase):
         self.down_time = None
 
         if(press_duration.total_seconds() >= self.__LONG_PRESS_DURATION__):
-            self.mode = "hue" if self.mode == "brightness" else "brightness"
+            match self.light.color_mode:
+                case 'color_temp':
+                    self.light = replace(
+                        self.light,
+                        color_mode='rgb'
+                    )
+
+                case 'rgb':
+                    self.light = replace(
+                        self.light,
+                        color_mode='color_temp'
+                    )
 
         else:
-            self.on = not self.on
+            newState = "on" if self.light.state == 'off' else 'off'
+            self.light = replace(self.light, state = newState)

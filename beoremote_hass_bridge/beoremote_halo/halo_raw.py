@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from typing import Literal
 from dataclasses import dataclass
 import uuid
 
@@ -9,28 +10,24 @@ class Configuration:
 
 @dataclass
 class Page:
-    def __init__(self, title, buttons):
-        self.id = uuid.uuid4()
-        self.title = title
-        self.buttons = buttons
+    title: str
+    buttons: list
+    id: uuid.UUID = uuid.uuid4()
 
 @dataclass
 class Button:
-    def __init__(self, title, content, id = uuid.uuid4(), subtitle = "", value = 0, state = "active", default = False):
-        self.id = id
-        self.title = title
-        self.subtitle = subtitle
-        self.value = value
-        self.state = state
-        self.content = content
-        self.default = default
+    id: uuid.UUID
+    title: str
+    content: object
+    subtitle: str = ''
+    value: int = 0
+    state: Literal['active', 'inactive'] = 'active'
+    default: bool = False
 
 @dataclass
 class ButtonTextContent:
-    def __init__(self, text):
-        self.text = text
+    text: str
 
 @dataclass
 class ButtonIconContent:
-    def __init__(self, icon):
-        self.icon = icon
+    icon: str
