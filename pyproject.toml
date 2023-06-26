@@ -1,10 +1,13 @@
 [tool.poetry]
-name = "beoremote-hass-bridge"
+name = "beoremote_hass_bridge"
 version = "0.1.0"
 description = ""
 authors = ["Fox Huston <448633+foxhuston@users.noreply.github.com>"]
 readme = "README.md"
-packages = [{include = "beoremote_hass_bridge"}]
+packages = [
+    {include = "beoremote_hass_bridge"},
+    {include = "" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"

@@ -15,10 +15,11 @@ class LightState:
     friendly_name: str | None = None
     color_mode: Literal['color_temp', 'rgb'] = 'color_temp'
     color_temp: int = 443
-    hs_color: Tuple[float, float] | None = None
+    hs_color: list[float] | None = None
     brightness: int | None = None
 
-    def from_ha_event(evt):
+    @classmethod
+    def from_ha_event(cls, evt):
         attrs = evt['attributes']
         return LightState(
             hass_entity=evt['entity_id'],
@@ -43,7 +44,7 @@ class RLQueue(asyncio.Queue):
         super().__init__(maxsize=maxsize)
         self.message_delta = 1 / messages_per_second
         self.last_time = datetime.now()
-        self.timeout_writer: asyncio.Task = None
+        self.timeout_writer: asyncio.Task | None = None
         self.latest_message = None
 
     def force_put_nowait(self, msg):

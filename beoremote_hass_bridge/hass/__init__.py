@@ -4,8 +4,8 @@ import aiohttp
 import os
 from urllib.parse import urlparse, urlunparse
 
-from common import RLQueue, LightState
-from beoremote_halo.buttons import ButtonBase, Light
+from beoremote_hass_bridge.common import LightState
+from beoremote_hass_bridge.beoremote_halo.buttons import ButtonBase, Light
 
 import pprint
 import coloredlogs, logging

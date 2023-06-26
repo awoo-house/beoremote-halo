@@ -5,13 +5,14 @@ import os
 import signal
 import asyncio
 from dotenv import load_dotenv
-from common import RLQueue, GetStatesFor
-
 load_dotenv()
 
-import hass
-import hass.ws
-import beoremote_halo as halo
+from beoremote_hass_bridge.common import RLQueue, GetStatesFor
+
+import beoremote_hass_bridge.hass as hass
+import beoremote_hass_bridge.hass.ws as hass_ws
+import beoremote_hass_bridge.beoremote_halo.ws as halo_ws
+import beoremote_hass_bridge.beoremote_halo.buttons as halo_buttons
 
 
 
@@ -28,8 +29,8 @@ async def main():
 
     pages = {
         "Den Lighting": [
-            halo.buttons.Light.mk_light("light.hue_color_lamp_1", default = True),
-            halo.buttons.Light.mk_light("light.foxs_bedroom")
+            halo_buttons.Light.mk_light("light.hue_color_lamp_1", default = True),
+            halo_buttons.Light.mk_light("light.foxs_bedroom")
         ]
     }
 
@@ -39,8 +40,8 @@ async def main():
         halo_to_hass = RLQueue(messages_per_second=3)
         hass_to_halo = RLQueue(messages_per_second=3)
 
-        hass_task = tg.create_task(hass.ws.init(urlunparse(hass_ws_uri), ["light.hue_color_lamp_1"], halo_to_hass, hass_to_halo))
-        halo_task = tg.create_task(halo.ws.init(os.getenv("BEOREMOTE_HALO_URI"), pages, halo_to_hass, hass_to_halo))
+        hass_task = tg.create_task(hass_ws.init(urlunparse(hass_ws_uri), ["light.hue_color_lamp_1"], halo_to_hass, hass_to_halo))
+        halo_task = tg.create_task(halo_ws.init(os.getenv("BEOREMOTE_HALO_URI"), pages, halo_to_hass, hass_to_halo))
 
         def handler(signum, frame):
             hass_task.cancel()

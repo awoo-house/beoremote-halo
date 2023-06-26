@@ -6,15 +6,15 @@ import jsons
 import datetime
 
 from .halo_raw import *
-from common import LightState
+from beoremote_hass_bridge.common import LightState
 
 LONG_PRESS_DURATION = 0.5
 
 class ButtonBase:
-    def hass_entity(self) -> str:
+    def hass_entity(self) -> str | None:
         pass
 
-    def get_configuration(self) -> Button:
+    def get_configuration(self) -> Button | None:
         pass
 
     def handle_wheel(self, counts: int):
@@ -41,7 +41,7 @@ def pct(out_max: float, in_max: float, n: float) -> int:
 class Light(ButtonBase):
     def __init__(self, light_state: LightState, default = False) -> None:
         self.light: LightState = light_state
-        self.down_time: datetime = None
+        self.down_time: datetime | None = None
         self.default = default
         self.id: uuid.UUID = uuid.uuid4()
 

@@ -15,10 +15,21 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "pip install --user ipython && poetry install",
+	"postCreateCommand": "poetry install",
 
 	// Configure tool-specific properties.
-	// "customizations": {},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"bungcip.better-toml"
+			],
+			"settings": {
+				"python.venvFolders": [
+					"/home/vscode/.cach./pypoetry/virtualenvs"
+				]
+			}
+		}
+	},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
