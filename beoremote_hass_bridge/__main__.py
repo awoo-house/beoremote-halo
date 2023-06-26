@@ -28,9 +28,10 @@ async def main():
 
 
     pages = {
-        "Den Lighting": [
+        "Lighting": [
+            halo_buttons.Light.mk_light("light.foxs_office", default = True),
             halo_buttons.Light.mk_light("light.hue_color_lamp_1", default = True),
-            halo_buttons.Light.mk_light("light.foxs_bedroom")
+            halo_buttons.Light.mk_light("light.office_floor_lamp", default = True),
         ]
     }
 
@@ -38,7 +39,7 @@ async def main():
 
     async with asyncio.TaskGroup() as tg:
         halo_to_hass = RLQueue(messages_per_second=3)
-        hass_to_halo = RLQueue(messages_per_second=3)
+        hass_to_halo = asyncio.Queue()
 
         hass_task = tg.create_task(hass_ws.init(urlunparse(hass_ws_uri), ["light.hue_color_lamp_1"], halo_to_hass, hass_to_halo))
         halo_task = tg.create_task(halo_ws.init(os.getenv("BEOREMOTE_HALO_URI"), pages, halo_to_hass, hass_to_halo))

@@ -30,7 +30,6 @@ class ButtonBase:
         btn_dict = jsons.dump(self.get_configuration())
         btn_dict["type"] = "button"
         upd = {"update": btn_dict}
-        print(">>>> " + str(upd))
         return upd
 
 def clamp(lower, upper, n): return max(lower, min(upper, n))

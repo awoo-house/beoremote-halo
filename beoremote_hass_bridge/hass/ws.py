@@ -52,14 +52,12 @@ async def handle_hass(websocket, ha_entities: list, halo_to_hass: asyncio.Queue,
 
     while True:
         message = json.loads(await websocket.recv())
-        # logger.debug(pp.pformat(message))
+        logger.debug(pp.pformat(message))
 
         match message['type']:
             case "event":
                 dat = message['event']['data']
-
-                if dat['entity_id'] in ha_entities:
-                    await hass_to_halo.put(LightState.from_ha_event(dat['new_state']))
+                await hass_to_halo.put(LightState.from_ha_event(dat['new_state']))
 
             case other:
                 pass
@@ -71,11 +69,10 @@ async def handle_halo_to_hass(halo_to_hass: asyncio.Queue, websocket):
     while True:
         msg = await halo_to_hass.get()
         logger.debug("Got halo event!")
-        logger.debug(msg)
+        # logger.debug(msg)
 
         match msg:
             case LightState(hass_entity=hass_entity, state='off') as lu:
-                logger.warn('lu state off')
                 await ha.call_service(
                     domain = 'light',
                     service = 'turn_off',
@@ -83,14 +80,22 @@ async def handle_halo_to_hass(halo_to_hass: asyncio.Queue, websocket):
                 )
 
             case LightState(hass_entity=hass_entity, state='on') as lu:
-                logger.warn('lu state on')
                 params = {}
+
                 if lu.brightness is not None:
                     params['brightness'] = lu.brightness
 
-                if lu.hs_color is not None:
-                    params['hs_color'] = lu.hs_color
+                match lu.color_mode:
+                    case 'color_temp':
+                        # params['color_mode'] = 'color_temp'
+                        params['color_temp'] = lu.color_temp
+                        pass
 
+                    case 'rgb':
+                        if lu.hs_color is not None:
+                            params['hs_color'] = lu.hs_color
+
+                logger.debug("sending update for " + lu.hass_entity)
                 await ha.call_service(
                     domain = 'light',
                     service = 'turn_on',
