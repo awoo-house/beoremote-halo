@@ -29,9 +29,10 @@ async def main():
 
     pages = {
         "Lighting": [
-            halo_buttons.Light.mk_light("light.foxs_office", default = True),
-            halo_buttons.Light.mk_light("light.hue_color_lamp_1", default = True),
-            halo_buttons.Light.mk_light("light.office_floor_lamp", default = True),
+            halo_buttons.Light.mk_light("light.living_room", default = True),
+            halo_buttons.Light.mk_light("light.foxs_office"),
+            halo_buttons.Light.mk_light("light.foxs_bedroom"),
+            halo_buttons.Light.mk_light("light.lexis_room"),
         ]
     }
 

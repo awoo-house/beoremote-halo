@@ -11,7 +11,7 @@ import pprint
 import coloredlogs, logging
 
 logger = logging.getLogger(__name__)
-coloredlogs.install(level='DEBUG', logger=logger)
+coloredlogs.install(logger=logger)
 
 pp = pprint.PrettyPrinter(width = 80)
 

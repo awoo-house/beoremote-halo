@@ -8,7 +8,7 @@ import coloredlogs, logging
 from beoremote_hass_bridge.common import LightState, GetStatesFor
 
 logger = logging.getLogger(__name__)
-coloredlogs.install(level='DEBUG', logger=logger)
+coloredlogs.install(logger=logger)
 
 from dotenv import load_dotenv
 load_dotenv()

@@ -21,11 +21,19 @@ class LightState:
     @classmethod
     def from_ha_event(cls, evt):
         attrs = evt['attributes']
+
+        match attrs.get('color_mode'):
+            case None | 'color_temp':
+                color_mode = 'color_temp'
+
+            case _:
+                color_mode = 'rgb'
+
         return LightState(
             hass_entity=evt['entity_id'],
             state=evt['state'],
             friendly_name=attrs['friendly_name'],
-            color_mode = 'color_temp' if attrs.get('color_mode') == 'color_temp' else 'rgb',
+            color_mode = color_mode,
             color_temp = attrs.get('color_temp') or 443,
             hs_color = attrs.get('hs_color') or [0, 100],
             brightness = attrs.get('brightness') or 0

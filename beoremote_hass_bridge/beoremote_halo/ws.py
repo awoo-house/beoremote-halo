@@ -17,7 +17,7 @@ from .halo_raw import Configuration, Page
 pp = pprint.PrettyPrinter(width=80)
 
 logger = logging.getLogger(__name__)
-coloredlogs.install(level='DEBUG', logger=logger)
+coloredlogs.install(logger=logger)
 
 last_sent_time = datetime.now()
 last_sent_entity = ""
@@ -61,7 +61,7 @@ async def handle_halo_events(websocket, pages: dict[str, list[Any]], halo_to_has
                         await websocket.send(jsons.dumps(btn.get_update()))
 
                         last_sent_time = datetime.now()
-                        last_sent_entity = btn.hass_entity
+                        last_sent_entity = btn.hass_entity()
                         await halo_to_hass.put(btn.light)
 
                 case "button":
@@ -117,7 +117,6 @@ async def handle_hass_to_halo(hass_to_halo: asyncio.Queue, pages: dict[str, list
                 if delta <= 10.0 and hass_entity == last_sent_entity:
                     logger.warn('ignoring hass event for ' + hass_entity)
                     continue
-
 
                 if hass_entity in btn_map:
                     match btn_map[hass_entity]:
